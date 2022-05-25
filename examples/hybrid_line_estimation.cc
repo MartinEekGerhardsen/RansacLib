@@ -42,12 +42,13 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
 
-#include <RansacLib/hybrid_ransac.h>
-#include <RansacLib/ransac.h>
+#include <ransac_lib/hybrid_ransac.h>
+#include <ransac_lib/ransac.h>
+
 #include "hybrid_line_estimator.h"
 
 // Generates a random transformation.
-void GenerateRandomTransform(Eigen::Matrix2d* R, Eigen::Vector2d* t) {
+void GenerateRandomTransform(Eigen::Matrix2d *R, Eigen::Vector2d *t) {
   std::random_device rand_dev;
   std::mt19937 rng(rand_dev());
   std::uniform_real_distribution<double> distr(-0.5, 0.5);
@@ -59,9 +60,9 @@ void GenerateRandomTransform(Eigen::Matrix2d* R, Eigen::Vector2d* t) {
 
 // Assumes that inlier threshold << 0.5.
 void GenerateRandomInstance(const int num_inliers, const int num_outliers,
-                            double inlier_threshold, const Eigen::Matrix2d& R,
-                            const Eigen::Vector2d& t,
-                            Eigen::Matrix4Xd* points_with_normals) {
+                            double inlier_threshold, const Eigen::Matrix2d &R,
+                            const Eigen::Vector2d &t,
+                            Eigen::Matrix4Xd *points_with_normals) {
   const int kNumPoints = num_inliers + num_outliers;
   points_with_normals->resize(4, kNumPoints);
 
@@ -126,7 +127,7 @@ void GenerateRandomInstance(const int num_inliers, const int num_outliers,
   }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   ransac_lib::HybridLORansacOptions options;
   options.min_num_iterations_ = 100u;
   options.max_num_iterations_ = 10000u;

@@ -28,8 +28,7 @@
 //
 // author: Torsten Sattler, torsten.sattler.de@googlemail.com
 
-#ifndef RANSACLIB_RANSACLIB_SAMPLING_H_
-#define RANSACLIB_RANSACLIB_SAMPLING_H_
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -43,10 +42,9 @@
 namespace ransac_lib {
 
 // Implements uniform sampling for RANSAC.
-template <class Solver>
-class UniformSampling {
- public:
-  UniformSampling(const unsigned int random_seed, const Solver& solver)
+template <class Solver> class UniformSampling {
+public:
+  UniformSampling(const unsigned int random_seed, const Solver &solver)
       : num_data_(solver.num_data()), sample_size_(solver.min_sample_size()) {
     rng_.seed(random_seed);
     draw_sample_ = DrawBetterThanShuffle(sample_size_, num_data_);
@@ -55,7 +53,7 @@ class UniformSampling {
   }
 
   // Draws minimal sample.
-  void Sample(std::vector<int>* random_sample) {
+  void Sample(std::vector<int> *random_sample) {
     if (draw_sample_) {
       DrawSample(random_sample);
     } else {
@@ -63,7 +61,7 @@ class UniformSampling {
     }
   }
 
- protected:
+protected:
   // Function to decide whether random sampling or shuffling is more
   // efficient. Returns true if sampling is more efficient.
   inline bool DrawBetterThanShuffle(const int sample_size,
@@ -78,8 +76,8 @@ class UniformSampling {
   }
 
   // Draws a minimal sample of size sample_size.
-  void DrawSample(std::vector<int>* random_sample) {
-    std::vector<int>& sample = *random_sample;
+  void DrawSample(std::vector<int> *random_sample) {
+    std::vector<int> &sample = *random_sample;
     sample.resize(sample_size_);
     for (int i = 0; i < sample_size_; ++i) {
       bool found = true;
@@ -99,10 +97,11 @@ class UniformSampling {
   // DrawSample is efficient is sample_size is small enough compared to the
   // number of elements. Otherwise, it is faster to randomly shuffle the
   // elements and pick the first sample_size ones.
-  void ShuffleSample(std::vector<int>* random_sample) {
+  void ShuffleSample(std::vector<int> *random_sample) {
     random_sample->resize(num_data_);
     std::iota(random_sample->begin(), random_sample->end(), 0);
-    if (sample_size_ == num_data_) return;
+    if (sample_size_ == num_data_)
+      return;
 
     // Fisher-Yates shuffling.
     RandomShuffle(random_sample);
@@ -112,8 +111,8 @@ class UniformSampling {
   // This function implements Fisher-Yates shuffling, implemented "manually"
   // here following: https://lemire.me/blog/2016/10/10/a-case-study-in-the-
   // performance-cost-of-abstraction-cs-stdshuffle/
-  void RandomShuffle(std::vector<int>* random_sample) {
-    std::vector<int>& sample = *random_sample;
+  void RandomShuffle(std::vector<int> *random_sample) {
+    std::vector<int> &sample = *random_sample;
     const int kNumElements = static_cast<int>(sample.size());
     for (int i = 0; i < (kNumElements - 1); ++i) {
       std::uniform_int_distribution<int> dist(i, kNumElements - 1);
@@ -134,6 +133,4 @@ class UniformSampling {
   bool draw_sample_;
 };
 
-}  // namespace ransac_lib
-
-#endif  // RANSACLIB_RANSACLIB_SAMPLING_H_
+} // namespace ransac_lib

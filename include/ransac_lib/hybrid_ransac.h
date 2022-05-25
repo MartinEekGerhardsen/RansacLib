@@ -28,8 +28,7 @@
 //
 // author: Torsten Sattler, torsten.sattler.de@googlemail.com
 
-#ifndef RANSACLIB_RANSACLIB_HYBRID_RANSAC_H_
-#define RANSACLIB_RANSACLIB_HYBRID_RANSAC_H_
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -39,18 +38,16 @@
 #include <random>
 #include <vector>
 
-#include <RansacLib/hybrid_sampling.h>
-#include <RansacLib/utils.h>
+#include <ransac_lib/hybrid_sampling.h>
+#include <ransac_lib/utils.h>
 
 namespace ransac_lib {
 
 class HybridRansacOptions {
- public:
+public:
   HybridRansacOptions()
-      : min_num_iterations_(100u),
-        max_num_iterations_(10000u),
-        max_num_iterations_per_solver_(10000u),
-        success_probability_(0.9999),
+      : min_num_iterations_(100u), max_num_iterations_(10000u),
+        max_num_iterations_per_solver_(10000u), success_probability_(0.9999),
         random_seed_(0u) {
     squared_inlier_thresholds_.clear();
   }
@@ -68,14 +65,11 @@ class HybridRansacOptions {
 // See Lebeda et al., Fixing the Locally Optimized RANSAC, BMVC, Table 1 for
 // details on the variables.
 class HybridLORansacOptions : public HybridRansacOptions {
- public:
+public:
   HybridLORansacOptions()
-      : num_lo_steps_(10),
-        threshold_multiplier_(std::sqrt(2.0)),
-        num_lsq_iterations_(4),
-        min_sample_multiplicator_(7),
-        lo_starting_iterations_(50u),
-        final_least_squares_(false) {}
+      : num_lo_steps_(10), threshold_multiplier_(std::sqrt(2.0)),
+        num_lsq_iterations_(4), min_sample_multiplicator_(7),
+        lo_starting_iterations_(50u), final_least_squares_(false) {}
   int num_lo_steps_;
   double threshold_multiplier_;
   int num_lsq_iterations_;
@@ -96,7 +90,7 @@ struct HybridRansacStatistics {
   uint32_t num_iterations_total;
   std::vector<uint32_t> num_iterations_per_solver;
   int best_num_inliers;
-  int best_solver_type;  // The type of solver used to create the best model.
+  int best_solver_type; // The type of solver used to create the best model.
   double best_model_score;
   std::vector<double> inlier_ratios;
   std::vector<std::vector<int>> inlier_indices;
@@ -104,9 +98,9 @@ struct HybridRansacStatistics {
 };
 
 class HybridRansacBase {
- protected:
-  void ResetStatistics(HybridRansacStatistics* statistics) const {
-    HybridRansacStatistics& stats = *statistics;
+protected:
+  void ResetStatistics(HybridRansacStatistics *statistics) const {
+    HybridRansacStatistics &stats = *statistics;
     stats.best_num_inliers = 0;
     stats.best_model_score = std::numeric_limits<double>::max();
     stats.num_iterations_total = 0u;
@@ -124,20 +118,20 @@ class HybridRansacBase {
 // Optimized RANSAC, BMVC 2012]. Iteratively re-weighted least-squares
 // optimization is optional.
 template <class Model, class ModelVector, class HybridSolver,
-          class Sampler = HybridUniformSampling<HybridSolver> >
+          class Sampler = HybridUniformSampling<HybridSolver>>
 class HybridLocallyOptimizedMSAC : public HybridRansacBase {
- public:
+public:
   // Estimates a model using a given solver. Notice that the solver contains
   // all data and is responsible to implement a non-minimal solver and
   // least-squares refinement. The latter two are optional, i.e., a dummy
   // implementation returning false is sufficient.
   // Returns the number of inliers.
-  int EstimateModel(const HybridLORansacOptions& options,
-                    const HybridSolver& solver, Model* best_model,
-                    HybridRansacStatistics* statistics) const {
+  int EstimateModel(const HybridLORansacOptions &options,
+                    const HybridSolver &solver, Model *best_model,
+                    HybridRansacStatistics *statistics) const {
     // Initializes all relevant variables.
     ResetStatistics(statistics);
-    HybridRansacStatistics& stats = *statistics;
+    HybridRansacStatistics &stats = *statistics;
 
     const int kNumSolvers = solver.num_minimal_solvers();
     stats.num_iterations_per_solver.resize(kNumSolvers, 0);
@@ -169,7 +163,7 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
         kNumSolvers, std::max(options.max_num_iterations_per_solver_,
                               options.min_num_iterations_));
 
-    const std::vector<double>& kSqrInlierThresh =
+    const std::vector<double> &kSqrInlierThresh =
         options.squared_inlier_thresholds_;
 
     Model best_minimal_model;
@@ -246,7 +240,8 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
           const bool kRunLO =
               (stats.num_iterations_total >= options.lo_starting_iterations_ &&
                best_min_model_score < std::numeric_limits<double>::max());
-          if ((!kBestMinModel) && (!kRunLO)) continue;
+          if ((!kBestMinModel) && (!kRunLO))
+            continue;
 
           // Performs local optimization. By construction, the local
           // optimization method returns the best model between all models found
@@ -319,13 +314,13 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
     return stats.best_num_inliers;
   }
 
- protected:
+protected:
   // Randomly selects a minimal solver. See Eq. 1 in Camposeco et al.
-  int SelectMinimalSolver(const HybridSolver& solver,
+  int SelectMinimalSolver(const HybridSolver &solver,
                           const std::vector<double> prior_probabilities,
-                          const HybridRansacStatistics& stats,
+                          const HybridRansacStatistics &stats,
                           const uint32_t min_num_iterations,
-                          std::mt19937* rng) const {
+                          std::mt19937 *rng) const {
     double sum_probabilities = 0.0;
     const int kNumSolvers = static_cast<int>(prior_probabilities.size());
     std::vector<std::vector<int>> min_sample_sizes;
@@ -375,20 +370,22 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
     const double kProb = dist(*rng);
     double current_prob = 0.0;
     for (int i = 0; i < kNumSolvers; ++i) {
-      if (prior_probabilities[i] == 0.0) continue;
+      if (prior_probabilities[i] == 0.0)
+        continue;
 
       current_prob += probabilities[i];
-      if (kProb <= current_prob) return i;
+      if (kProb <= current_prob)
+        return i;
     }
     return -1;
   }
 
   void GetBestEstimatedModelId(
-      const HybridLORansacOptions& options, const HybridSolver& solver,
-      const ModelVector& models, const int num_models,
-      const std::vector<double>& squared_inlier_thresholds,
+      const HybridLORansacOptions &options, const HybridSolver &solver,
+      const ModelVector &models, const int num_models,
+      const std::vector<double> &squared_inlier_thresholds,
       const int num_data_types, const std::vector<int> num_data,
-      double* best_score, int* best_model_id) const {
+      double *best_score, int *best_model_id) const {
     *best_score = std::numeric_limits<double>::max();
     *best_model_id = 0;
 
@@ -404,11 +401,11 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
     }
   }
 
-  void ScoreModel(const HybridLORansacOptions& options,
-                  const HybridSolver& solver, const Model& model,
-                  const std::vector<double>& squared_inlier_thresholds,
+  void ScoreModel(const HybridLORansacOptions &options,
+                  const HybridSolver &solver, const Model &model,
+                  const std::vector<double> &squared_inlier_thresholds,
                   const int num_data_types, const std::vector<int> num_data,
-                  double* score) const {
+                  double *score) const {
     *score = 0.0;
 
     for (int t = 0; t < num_data_types; ++t) {
@@ -426,9 +423,9 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
     return std::min(squared_error, squared_error_threshold);
   }
 
-  int GetInliers(const HybridSolver& solver, const Model& model,
-                 const std::vector<double>& squared_inlier_thresholds,
-                 std::vector<std::vector<int>>* inliers) const {
+  int GetInliers(const HybridSolver &solver, const Model &model,
+                 const std::vector<double> &squared_inlier_thresholds,
+                 std::vector<std::vector<int>> *inliers) const {
     const int kNumDataTypes = solver.num_data_types();
     std::vector<int> num_data;
     solver.num_data(&num_data);
@@ -462,9 +459,9 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
   }
 
   void UpdateRANSACTerminationCriteria(
-      const HybridLORansacOptions& options, const HybridSolver& solver,
-      const Model& model, HybridRansacStatistics* statistics,
-      std::vector<uint32_t>* max_iterations) const {
+      const HybridLORansacOptions &options, const HybridSolver &solver,
+      const Model &model, HybridRansacStatistics *statistics,
+      std::vector<uint32_t> *max_iterations) const {
     statistics->best_num_inliers =
         GetInliers(solver, model, options.squared_inlier_thresholds_,
                    &(statistics->inlier_indices));
@@ -497,11 +494,11 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
   // See algorithms 2 and 3 in Lebeda et al.
   // The input model is overwritten with the refined model if the latter is
   // better, i.e., has a lower score.
-  void LocalOptimization(const HybridLORansacOptions& options,
-                         const HybridSolver& solver, const int solver_type,
-                         std::mt19937* rng, Model* best_minimal_model,
-                         double* score_best_minimal_model,
-                         int* best_solver_type) const {
+  void LocalOptimization(const HybridLORansacOptions &options,
+                         const HybridSolver &solver, const int solver_type,
+                         std::mt19937 *rng, Model *best_minimal_model,
+                         double *score_best_minimal_model,
+                         int *best_solver_type) const {
     std::vector<int> num_data;
     solver.num_data(&num_data);
     const int kNumDataTypes = static_cast<int>(num_data.size());
@@ -566,10 +563,10 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
     }
   }
 
-  void LeastSquaresFit(const HybridLORansacOptions& options,
-                       const std::vector<double>& thresholds,
-                       const int solver_type, const HybridSolver& solver,
-                       std::mt19937* rng, Model* model) const {
+  void LeastSquaresFit(const HybridLORansacOptions &options,
+                       const std::vector<double> &thresholds,
+                       const int solver_type, const HybridSolver &solver,
+                       std::mt19937 *rng, Model *model) const {
     std::vector<std::vector<int>> sample_sizes;
     solver.min_sample_sizes(&sample_sizes);
 
@@ -594,9 +591,9 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
     solver.LeastSquares(inliers, model);
   }
 
-  inline void UpdateBestModel(const double score_curr, const Model& m_curr,
-                              const int solver_type, double* score_best,
-                              Model* m_best, int* best_solver_type) const {
+  inline void UpdateBestModel(const double score_curr, const Model &m_curr,
+                              const int solver_type, double *score_best,
+                              Model *m_best, int *best_solver_type) const {
     if (score_curr < *score_best) {
       *score_best = score_curr;
       *m_best = m_curr;
@@ -607,10 +604,10 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
   // Determines whether enough data is available to run any of the minimal
   // solvers. Returns false otherwise. For those solvers that are not feasible
   // because not all data is available, the prior probability is set to 0.
-  bool VerifyData(const std::vector<std::vector<int>>& min_sample_sizes,
-                  const std::vector<int>& num_data, const int num_solvers,
+  bool VerifyData(const std::vector<std::vector<int>> &min_sample_sizes,
+                  const std::vector<int> &num_data, const int num_solvers,
                   const int num_data_types,
-                  std::vector<double>* prior_probabilities) const {
+                  std::vector<double> *prior_probabilities) const {
     for (int i = 0; i < num_solvers; ++i) {
       for (int j = 0; j < num_data_types; ++j) {
         if (min_sample_sizes[i][j] > num_data[j] ||
@@ -638,6 +635,4 @@ class HybridLocallyOptimizedMSAC : public HybridRansacBase {
   }
 };
 
-}  // namespace ransac_lib
-
-#endif  // RANSACLIB_RANSACLIB_HYBRID_RANSAC_H_
+} // namespace ransac_lib

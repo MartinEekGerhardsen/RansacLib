@@ -42,8 +42,8 @@
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 
+#include <ransac_lib/ransac.h>
 
-#include <RansacLib/ransac.h>
 #include "calibrated_absolute_pose_estimator.h"
 
 namespace ransac_lib {
@@ -53,8 +53,8 @@ void GenerateRandomInstance(const double width, const double height,
                             const double focal_length, const int num_inliers,
                             const int num_outliers, double inlier_threshold,
                             const double min_depth, const double max_depth,
-                            Points2D* points2D, ViewingRays* rays,
-                            Points3D* points3D) {
+                            Points2D *points2D, ViewingRays *rays,
+                            Points3D *points3D) {
   const int kNumPoints = num_inliers + num_outliers;
   points2D->resize(kNumPoints);
   points3D->resize(kNumPoints);
@@ -126,10 +126,10 @@ void GenerateRandomInstance(const double width, const double height,
       focal_length, focal_length, *points2D, rays);
 }
 
-}  // namespace calibrated_absolute_pose
-}  // namespace ransac_lib
+} // namespace calibrated_absolute_pose
+} // namespace ransac_lib
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   ransac_lib::LORansacOptions options;
   options.min_num_iterations_ = 100u;
   options.max_num_iterations_ = 1000000u;

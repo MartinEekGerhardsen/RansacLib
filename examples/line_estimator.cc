@@ -45,15 +45,16 @@
 
 namespace ransac_lib {
 
-LineEstimator::LineEstimator(const Eigen::Matrix2Xd& data) {
+LineEstimator::LineEstimator(const Eigen::Matrix2Xd &data) {
   data_ = data;
   num_data_ = data_.cols();
 }
 
-int LineEstimator::MinimalSolver(const std::vector<int>& sample,
-                                 std::vector<Eigen::Vector3d>* lines) const {
+int LineEstimator::MinimalSolver(const std::vector<int> &sample,
+                                 std::vector<Eigen::Vector3d> *lines) const {
   lines->clear();
-  if (sample.size() < 2u) return 0;
+  if (sample.size() < 2u)
+    return 0;
 
   lines->resize(1);
   Eigen::Vector3d p1(data_(0, sample[0]), data_(1, sample[0]), 1.0);
@@ -71,9 +72,10 @@ int LineEstimator::MinimalSolver(const std::vector<int>& sample,
   return 1;
 }
 
-int LineEstimator::NonMinimalSolver(const std::vector<int>& sample,
-                                    Eigen::Vector3d* line) const {
-  if (sample.size() < 6u) return 0;
+int LineEstimator::NonMinimalSolver(const std::vector<int> &sample,
+                                    Eigen::Vector3d *line) const {
+  if (sample.size() < 6u)
+    return 0;
 
   const int kNumSamples = static_cast<int>(sample.size());
 
@@ -95,7 +97,8 @@ int LineEstimator::NonMinimalSolver(const std::vector<int>& sample,
   C /= static_cast<double>(kNumSamples - 1);
 
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> eig_solver(C);
-  if (eig_solver.info() != Eigen::Success) return 0;
+  if (eig_solver.info() != Eigen::Success)
+    return 0;
 
   line->head<2>() = eig_solver.eigenvectors().col(1);
 
@@ -107,10 +110,10 @@ int LineEstimator::NonMinimalSolver(const std::vector<int>& sample,
 }
 
 // Evaluates the line on the i-th data point.
-double LineEstimator::EvaluateModelOnPoint(const Eigen::Vector3d& line,
+double LineEstimator::EvaluateModelOnPoint(const Eigen::Vector3d &line,
                                            int i) const {
   double residual = line.dot(data_.col(i).homogeneous());
   return residual * residual;
 }
 
-}  // namespace ransac_lib
+} // namespace ransac_lib

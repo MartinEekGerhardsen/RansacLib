@@ -42,12 +42,13 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
 
-#include <RansacLib/ransac.h>
+#include <ransac_lib/ransac.h>
+
 #include "line_estimator.h"
 
 // Assumes that inlier threshold << 0.5.
 void GenerateRandomInstance(const int num_inliers, const int num_outliers,
-                            double inlier_threshold, Eigen::Matrix2Xd* points) {
+                            double inlier_threshold, Eigen::Matrix2Xd *points) {
   const int kNumPoints = num_inliers + num_outliers;
   points->resize(2, kNumPoints);
 
@@ -105,7 +106,7 @@ void GenerateRandomInstance(const int num_inliers, const int num_outliers,
   }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   ransac_lib::LORansacOptions options;
   options.min_num_iterations_ = 100u;
   options.max_num_iterations_ = 100000u;

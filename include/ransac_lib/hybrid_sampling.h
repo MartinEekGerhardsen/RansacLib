@@ -28,8 +28,7 @@
 //
 // author: Torsten Sattler, torsten.sattler.de@googlemail.com
 
-#ifndef RANSACLIB_RANSACLIB_HYBRID_SAMPLING_H_
-#define RANSACLIB_RANSACLIB_HYBRID_SAMPLING_H_
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -43,31 +42,31 @@
 namespace ransac_lib {
 
 // Implements uniform sampling for HybridRANSAC.
-template <class Solver>
-class HybridUniformSampling {
- public:
-  HybridUniformSampling(const unsigned int random_seed,
-                        const Solver& solver) {
+template <class Solver> class HybridUniformSampling {
+public:
+  HybridUniformSampling(const unsigned int random_seed, const Solver &solver) {
     solver.num_data(&num_data_);
     rng_.seed(random_seed);
     num_data_types_ = static_cast<int>(num_data_.size());
 
     uniform_dstr_.resize(num_data_types_);
     for (int i = 0; i < num_data_types_; ++i) {
-      if (num_data_[i] < 2) continue;
+      if (num_data_[i] < 2)
+        continue;
       uniform_dstr_[i].param(
           std::uniform_int_distribution<int>::param_type(0, num_data_[i] - 1));
     }
   }
 
   // Draws minimal sample.
-  void Sample(const std::vector<int>& num_samples_per_data_type,
-              std::vector<std::vector<int>>* random_sample) {
-    std::vector<std::vector<int>>& sample = *random_sample;
+  void Sample(const std::vector<int> &num_samples_per_data_type,
+              std::vector<std::vector<int>> *random_sample) {
+    std::vector<std::vector<int>> &sample = *random_sample;
     sample.resize(num_data_types_);
     for (int i = 0; i < num_data_types_; ++i) {
       sample[i].clear();
-      if (num_samples_per_data_type[i] <= 0) continue;
+      if (num_samples_per_data_type[i] <= 0)
+        continue;
       const double kCoeff =
           static_cast<double>(num_data_[i]) /
           static_cast<double>(num_data_[i] - num_samples_per_data_type[i]);
@@ -79,12 +78,12 @@ class HybridUniformSampling {
     }
   }
 
- protected:
+protected:
   // Draws a minimal sample of size sample_size.
-  void DrawSample(const std::vector<int>& num_samples_per_data_type,
+  void DrawSample(const std::vector<int> &num_samples_per_data_type,
                   const int data_type,
-                  std::vector<std::vector<int>>* random_sample) {
-    std::vector<std::vector<int>>& sample = *random_sample;
+                  std::vector<std::vector<int>> *random_sample) {
+    std::vector<std::vector<int>> &sample = *random_sample;
     sample[data_type].resize(num_samples_per_data_type[data_type]);
     for (int i = 0; i < num_samples_per_data_type[data_type]; ++i) {
       bool found = true;
@@ -104,13 +103,14 @@ class HybridUniformSampling {
   // DrawSample is efficient is sample_size[i] is small enough compared to the
   // number of elements. Otherwise, it is faster to randomly shuffle the
   // elements and pick the first sample_size ones.
-  void ShuffleSample(const std::vector<int>& num_samples_per_data_type,
+  void ShuffleSample(const std::vector<int> &num_samples_per_data_type,
                      const int data_type,
-                     std::vector<std::vector<int>>* random_sample) {
+                     std::vector<std::vector<int>> *random_sample) {
     (*random_sample)[data_type].resize(num_data_[data_type]);
     std::iota((*random_sample)[data_type].begin(),
               (*random_sample)[data_type].end(), 0);
-    if (num_samples_per_data_type[data_type] == num_data_[data_type]) return;
+    if (num_samples_per_data_type[data_type] == num_data_[data_type])
+      return;
 
     // Fisher-Yates shuffling.
     RandomShuffle(&((*random_sample)[data_type]));
@@ -120,8 +120,8 @@ class HybridUniformSampling {
   // This function implements Fisher-Yates shuffling, implemented "manually"
   // here following: https://lemire.me/blog/2016/10/10/a-case-study-in-the-
   // performance-cost-of-abstraction-cs-stdshuffle/
-  void RandomShuffle(std::vector<int>* random_sample) {
-    std::vector<int>& sample = *random_sample;
+  void RandomShuffle(std::vector<int> *random_sample) {
+    std::vector<int> &sample = *random_sample;
     const int kNumElements = static_cast<int>(sample.size());
     for (int i = 0; i < (kNumElements - 1); ++i) {
       std::uniform_int_distribution<int> dist(i, kNumElements - 1);
@@ -142,11 +142,9 @@ class HybridUniformSampling {
 // Implements a biased sampling for HybridRANSAC, where each data point has
 // an associated weight and points with a higher weight are more likely to be
 // sampled. Points with weight 0 are ignored during sampling.
-template <class Solver>
-class HybridBiasedSampling {
- public:
-  HybridBiasedSampling(const unsigned int random_seed,
-                       const Solver& solver) {
+template <class Solver> class HybridBiasedSampling {
+public:
+  HybridBiasedSampling(const unsigned int random_seed, const Solver &solver) {
     std::vector<std::vector<double>> weights;
     solver.get_weights(weights);
     rng_.seed(random_seed);
@@ -174,13 +172,14 @@ class HybridBiasedSampling {
   }
 
   // Draws minimal sample.
-  void Sample(const std::vector<int>& num_samples_per_data_type,
-              std::vector<std::vector<int>>* random_sample) {
-    std::vector<std::vector<int>>& sample = *random_sample;
+  void Sample(const std::vector<int> &num_samples_per_data_type,
+              std::vector<std::vector<int>> *random_sample) {
+    std::vector<std::vector<int>> &sample = *random_sample;
     sample.resize(num_data_types_);
     for (int i = 0; i < num_data_types_; ++i) {
       sample[i].clear();
-      if (num_samples_per_data_type[i] <= 0) continue;
+      if (num_samples_per_data_type[i] <= 0)
+        continue;
       if (num_samples_per_data_type[i] ==
           static_cast<int>(data_ids_[i].size())) {
         (*random_sample)[i] = data_ids_[i];
@@ -190,12 +189,12 @@ class HybridBiasedSampling {
     }
   }
 
- protected:
+protected:
   // Draws a minimal sample of size sample_size.
-  void DrawSample(const std::vector<int>& num_samples_per_data_type,
+  void DrawSample(const std::vector<int> &num_samples_per_data_type,
                   const int data_type,
-                  std::vector<std::vector<int>>* random_sample) {
-    std::vector<std::vector<int>>& sample = *random_sample;
+                  std::vector<std::vector<int>> *random_sample) {
+    std::vector<std::vector<int>> &sample = *random_sample;
     sample[data_type].resize(num_samples_per_data_type[data_type]);
     for (int i = 0; i < num_samples_per_data_type[data_type]; ++i) {
       bool found = true;
@@ -222,6 +221,4 @@ class HybridBiasedSampling {
   std::vector<std::vector<int>> data_ids_;
 };
 
-}  // namespace ransac_lib
-
-#endif  // RANSACLIB_RANSACLIB_HYBRID_SAMPLING_H_
+} // namespace ransac_lib

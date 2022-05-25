@@ -45,7 +45,8 @@
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 
-#include <RansacLib/ransac.h>
+#include <ransac_lib/ransac.h>
+
 #include "calibrated_absolute_pose_estimator.h"
 
 struct QueryData {
@@ -63,8 +64,8 @@ struct QueryData {
 };
 
 // Loads the list of query images together with their intrinsics.
-bool LoadListAndFocals(const std::string& filename,
-                       std::vector<QueryData>* query_images) {
+bool LoadListAndFocals(const std::string &filename,
+                       std::vector<QueryData> *query_images) {
   std::ifstream ifs(filename.c_str(), std::ios::in);
   if (!ifs.is_open()) {
     std::cerr << " ERROR: Cannot read the image list from " << filename
@@ -95,16 +96,16 @@ bool LoadListAndFocals(const std::string& filename,
       // https://github.com/colmap/colmap/blob/master/src/base/camera_models.h
       // for details).
       q.radial.resize(4);
-      s_stream >> q.focal_x >> q.focal_y >> q.c_x >> q.c_y >> q.radial[0]
-               >> q.radial[1] >> q.radial[2] >> q.radial[3];
+      s_stream >> q.focal_x >> q.focal_y >> q.c_x >> q.c_y >> q.radial[0] >>
+          q.radial[1] >> q.radial[2] >> q.radial[3];
     } else if (camera_type.compare("VSFM") == 0) {
       q.radial.resize(1);
       s_stream >> q.focal_x >> q.c_x >> q.c_y >> q.radial[0];
       q.focal_y = q.focal_x;
     } else if (camera_type.compare("BROWN_3_PARAMS") == 0) {
       q.radial.resize(3);
-      s_stream >> q.focal_x >> q.focal_y >> q.c_x >> q.c_y >> q.radial[0]
-               >> q.radial[1] >> q.radial[2];
+      s_stream >> q.focal_x >> q.focal_y >> q.c_x >> q.c_y >> q.radial[0] >>
+          q.radial[1] >> q.radial[2];
     }
     query_images->push_back(q);
   }
@@ -115,9 +116,9 @@ bool LoadListAndFocals(const std::string& filename,
 }
 
 // Loads the 2D-3D matches found for that image from a text file.
-bool LoadMatches(const std::string& filename, bool invert_Y_Z,
-                 ransac_lib::calibrated_absolute_pose::Points2D* points2D,
-                 ransac_lib::calibrated_absolute_pose::Points3D* points3D) {
+bool LoadMatches(const std::string &filename, bool invert_Y_Z,
+                 ransac_lib::calibrated_absolute_pose::Points2D *points2D,
+                 ransac_lib::calibrated_absolute_pose::Points3D *points3D) {
   points2D->clear();
   points3D->clear();
 
@@ -149,7 +150,7 @@ bool LoadMatches(const std::string& filename, bool invert_Y_Z,
   return true;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   using ransac_lib::LocallyOptimizedMSAC;
   using ransac_lib::calibrated_absolute_pose::CalibratedAbsolutePoseEstimator;
   using ransac_lib::calibrated_absolute_pose::CameraPose;
@@ -160,10 +161,10 @@ int main(int argc, char** argv) {
 
   std::cout << " usage: " << argv[0] << " images_with_intrinsics outfile "
             << "inlier_threshold num_lo_steps invert_Y_Z points_centered "
-            << "[match-file postfix]"
-            << std::endl;
-  if (argc < 7) return -1;
-  
+            << "[match-file postfix]" << std::endl;
+  if (argc < 7)
+    return -1;
+
   bool invert_Y_Z = static_cast<bool>(atoi(argv[5]));
   bool points_centered = static_cast<bool>(atoi(argv[6]));
 
@@ -199,29 +200,29 @@ int main(int argc, char** argv) {
                 << std::endl;
       continue;
     }
-    
+
     const int kNumMatches = static_cast<int>(points2D.size());
-//    // Writes out the matches after subtracting the principal point.
-//    {
-//      for (int j = 0; j < kNumMatches; ++j) {
-//        points2D[j][0] -= query_data[i].c_x;
-//        points2D[j][1] -= query_data[i].c_y;
-//      }
-//
-//      std::ofstream ofs(matchfile.c_str(), std::ios::out);
-//      if (ofs.is_open()) {
-//        std::cout << " Updating match file" << std::endl;
-//
-//        for (int j = 0; j < kNumMatches; ++j) {
-//          ofs << std::setprecision(12) << points2D[j][0] << " "
-//              << points2D[j][1] << " " << points3D[j][0] << " "
-//              << points3D[j][1] << " " << points3D[j][2] << std::endl;
-//        }
-//
-//        ofs.close();
-//      }
-//    }
-    
+    //    // Writes out the matches after subtracting the principal point.
+    //    {
+    //      for (int j = 0; j < kNumMatches; ++j) {
+    //        points2D[j][0] -= query_data[i].c_x;
+    //        points2D[j][1] -= query_data[i].c_y;
+    //      }
+    //
+    //      std::ofstream ofs(matchfile.c_str(), std::ios::out);
+    //      if (ofs.is_open()) {
+    //        std::cout << " Updating match file" << std::endl;
+    //
+    //        for (int j = 0; j < kNumMatches; ++j) {
+    //          ofs << std::setprecision(12) << points2D[j][0] << " "
+    //              << points2D[j][1] << " " << points3D[j][0] << " "
+    //              << points3D[j][1] << " " << points3D[j][2] << std::endl;
+    //        }
+    //
+    //        ofs.close();
+    //      }
+    //    }
+
     std::cout << " image " << query_data[i].name << " has # " << kNumMatches
               << " matches as input to RANSAC" << std::endl;
     if (kNumMatches <= 3) {

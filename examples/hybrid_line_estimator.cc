@@ -46,8 +46,8 @@
 namespace ransac_lib {
 
 HybridLineEstimator::HybridLineEstimator(
-    const Eigen::Matrix2Xd& points, const Eigen::Matrix4Xd& points_with_normals,
-    const std::vector<double>& prior_probabilities) {
+    const Eigen::Matrix2Xd &points, const Eigen::Matrix4Xd &points_with_normals,
+    const std::vector<double> &prior_probabilities) {
   points_ = points;
   num_points_ = points_.cols();
   points_with_normals_ = points_with_normals;
@@ -56,12 +56,13 @@ HybridLineEstimator::HybridLineEstimator(
 }
 
 void HybridLineEstimator::LeastSquares(
-    const std::vector<std::vector<int>>& sample, Eigen::Vector3d* line) const {
+    const std::vector<std::vector<int>> &sample, Eigen::Vector3d *line) const {
   const int kNumSamplesPoints = static_cast<int>(sample[0].size());
   const int kNumSamplesPointsWithNormals = static_cast<int>(sample[1].size());
   const int kNumSamples = kNumSamplesPoints + kNumSamplesPointsWithNormals;
 
-  if (kNumSamples < 6) return;
+  if (kNumSamples < 6)
+    return;
   // We fit the line by estimating the eigenvectors of the covariance matrix
   // of the data.
   Eigen::Vector2d mean(0.0, 0.0);
@@ -87,7 +88,8 @@ void HybridLineEstimator::LeastSquares(
   C /= static_cast<double>(kNumSamples - 1);
 
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> eig_solver(C);
-  if (eig_solver.info() != Eigen::Success) return;
+  if (eig_solver.info() != Eigen::Success)
+    return;
 
   line->head<2>() = eig_solver.eigenvectors().col(1);
 
@@ -97,7 +99,7 @@ void HybridLineEstimator::LeastSquares(
 }
 
 // Evaluates the line on the i-th data point of the t-th data type.
-double HybridLineEstimator::EvaluateModelOnPoint(const Eigen::Vector3d& line,
+double HybridLineEstimator::EvaluateModelOnPoint(const Eigen::Vector3d &line,
                                                  int t, int i) const {
   double residual = 0.0;
   if (t == 0) {
@@ -109,9 +111,10 @@ double HybridLineEstimator::EvaluateModelOnPoint(const Eigen::Vector3d& line,
 }
 
 int HybridLineEstimator::TwoPointSolver(
-    const std::vector<int>& sample, std::vector<Eigen::Vector3d>* lines) const {
+    const std::vector<int> &sample, std::vector<Eigen::Vector3d> *lines) const {
   lines->clear();
-  if (sample.size() < 2u) return 0;
+  if (sample.size() < 2u)
+    return 0;
 
   lines->resize(1);
   Eigen::Vector3d p1(points_(0, sample[0]), points_(1, sample[0]), 1.0);
@@ -130,9 +133,10 @@ int HybridLineEstimator::TwoPointSolver(
 }
 
 int HybridLineEstimator::PointNormalSolver(
-    const std::vector<int>& sample, std::vector<Eigen::Vector3d>* lines) const {
+    const std::vector<int> &sample, std::vector<Eigen::Vector3d> *lines) const {
   lines->clear();
-  if (sample.size() < 1u) return 0;
+  if (sample.size() < 1u)
+    return 0;
 
   lines->resize(1);
   Eigen::Vector2d normal = points_with_normals_.col(sample[0]).tail<2>();
@@ -151,4 +155,4 @@ int HybridLineEstimator::PointNormalSolver(
   return 1;
 }
 
-}  // namespace ransac_lib
+} // namespace ransac_lib

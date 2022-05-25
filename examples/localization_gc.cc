@@ -44,7 +44,8 @@
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 
-#include <RansacLib/ransac.h>
+#include <ransac_lib/ransac.h>
+
 #include "calibrated_absolute_pose_estimator.h"
 
 struct QueryData {
@@ -62,8 +63,8 @@ struct QueryData {
 };
 
 // Loads the list of query images together with their intrinsics.
-bool LoadListAndFocals(const std::string& filename,
-                       std::vector<QueryData>* query_images) {
+bool LoadListAndFocals(const std::string &filename,
+                       std::vector<QueryData> *query_images) {
   std::ifstream ifs(filename.c_str(), std::ios::in);
   if (!ifs.is_open()) {
     std::cerr << " ERROR: Cannot read the image list from " << filename
@@ -98,9 +99,9 @@ bool LoadListAndFocals(const std::string& filename,
 }
 
 // Loads the 2D-3D matches found for that image from a text file.
-bool LoadMatches(const std::string& filename,
-                 ransac_lib::calibrated_absolute_pose::Points2D* points2D,
-                 ransac_lib::calibrated_absolute_pose::Points3D* points3D) {
+bool LoadMatches(const std::string &filename,
+                 ransac_lib::calibrated_absolute_pose::Points2D *points2D,
+                 ransac_lib::calibrated_absolute_pose::Points3D *points3D) {
   points2D->clear();
   points3D->clear();
 
@@ -129,7 +130,7 @@ bool LoadMatches(const std::string& filename,
   return true;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   using ransac_lib::LocallyOptimizedMSAC;
   using ransac_lib::calibrated_absolute_pose::CalibratedAbsolutePoseEstimator;
   using ransac_lib::calibrated_absolute_pose::CameraPose;
@@ -140,7 +141,8 @@ int main(int argc, char** argv) {
 
   std::cout << " usage: " << argv[0] << " images_with_intrinsics outfile "
             << "[match-file postfix]" << std::endl;
-  if (argc < 3) return -1;
+  if (argc < 3)
+    return -1;
 
   std::vector<QueryData> query_data;
   std::string list(argv[1]);
@@ -229,7 +231,8 @@ int main(int argc, char** argv) {
     std::cout << "   ... LOMSAC executed " << ransac_stats.number_lo_iterations
               << " local optimization stages" << std::endl;
 
-    if (num_ransac_inliers < 12) continue;
+    if (num_ransac_inliers < 12)
+      continue;
 
     Eigen::Matrix3d R = best_model.topLeftCorner<3, 3>();
     Eigen::Vector3d t = -R * best_model.col(3);
