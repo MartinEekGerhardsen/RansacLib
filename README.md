@@ -9,14 +9,13 @@ Currently, the following RANSAC-variants are implemented
 
 
 ## Installation
-RansacLib is header-only library, so no compilation is required. If you want to use the library in your project, simply include the directory into which you installed the library (such that `RansacLib/ransac.h` can be found from the path).
+RansacLib is header-only library, so no compilation is required. If you want to use the library in your project, simply include the directory into which you installed the library (such that `RansacLib/ransac.h` can be found from the path). It can also be installed:
 
-Besides the actual library, we also provide examples that illustrate how to use RansacLib. These examples can be found in the `examples` subdirectory. They require compilation, which can easily be done via CMake:
 ```
 mkdir build
 cd build/
-cmake -DCMAKE_PREFIX_PATH=/path/to/poselib/_install/lib/cmake/PoseLib ../
-make
+cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/your/installation/path
+cmake --build . --config Release --target -- -j $(nproc)
 ```
 We currently provide three examples:
 * `line_estimation` shows how to implement a solver for 2D line fitting and integrate it into RansacLib.
@@ -25,68 +24,10 @@ We currently provide three examples:
 
 Other examples provides in `examples/` are used for internal testing and can be safely ignored.
 
-There are currently three dependencies:
+Eigen is the only necessary dependency, though for some of the examples PoseLib and Ceres are needed:
 * [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 * [PoseLib](https://github.com/vlarsson/PoseLib)
 * [Ceres Solver](http://ceres-solver.org/)
-
-### Python bindings
-pybind11 included as a submodule. After cloning the repository, run
-```
-git submodule update --init --recursive
-```
-
-install setuptools
-
-### linux
-Make sure to set the `CMAKE_PREFIX_PATH` environment variable to point to the directory containing cmake files for PoseLib.
-```
-pip install ./
-```
-
-### Windows with vcpkg
-Set the `CMAKE_TOOLCHAIN_FILE` environment variable to your `vcpkg\scripts\buildsystems\vcpkg.cmake` path.
-
-example (powershell)
-```
-$env:CMAKE_TOOLCHAIN_FILE='C:\Workspace\vcpkg\scripts\buildsystems\vcpkg.cmake'
-```
-
-Install Eigen3, Ceres with vcpkg
-
-build PoseLib, then (change the path to PoseLib with yours)
-in powershell
-```
-$env:CMAKE_PREFIX_PATH='C:\Workspace\dev\PoseLibe\_install/lib/cmake/PoseLib'
-py -3.6 -m pip install .
-```
-
-### usage
-```python
-import pyransaclib
-
-# Parameters:
-# - image_name: str, name of the image (only used for logging)
-# - fx: float, focal of camera
-# - fy: float, focal of camera
-# - points2D_undistorted: (n, 2) ndarray undistored 2D keypoints, centered (subtract the principal point)
-# - points3D: (n, 2) ndarray 3D points that are observed from the 2D points
-# - inlier_threshold: float, RANSAC inlier threshold in pixel
-# - number_lo_steps: int, number of local optimization iterations in LO-MSAC. Use 0 to use MSAC
-# - min_num_iterations: int, min number of ransac iterations
-# - max_num_iterations: int, max number of ransac iterations
-ret = pyransaclib.ransaclib_localization(image_name, fx, fy,
-                                         points2D_undistorted, points3D,
-                                         inlier_threshold, number_lo_steps,
-                                         min_num_iterations, max_num_iterations)
-# Returns:
-# - dictionary:
-# "success": localization was sucessfull or not
-# "qvec": [w,x,y,z] rotation quaternion from world to camera
-# "tvec": [x,y,z] translation from world to camera
-# "num_inliers": number of inliers selected by ransac
-# "inliers": indices of the inliers in the points2D_undistorted/points3D array
-```
 
 ## Using RansacLib
 RansacLib uses templates to enable easy integration of novel solvers into RANSAC. More precisely, three classes need to be defined: `class Model`, `class ModelVector`, `class Solver`. These classes are explained in more detail in the following:
@@ -106,16 +47,16 @@ class MySolver {
  public:
   // Returns the number of data points required by a minimal solver.
   int min_sample_size() const;
-  
+
   // Returns the number of data points required by a non-minimal solver for
-  // the problem. This number should be larger than 0, even if your class 
+  // the problem. This number should be larger than 0, even if your class
   // does not implement a non-minimal solver to avoid trying to generate
   // samples of size 0 inside RANSAC.
   int non_minimal_sample_size() const;
-  
+
   // Returns the number of data points stored in the solver.
   int num_data() const;
-  
+
   // A call to the minimal solver implemented inside the solver. The input
   // is a set of indices between 0 and num_data() - 1 that form the random
   // minimal sample drawn by RANSAC. sample.size() is guaranteed to be
@@ -129,7 +70,7 @@ class MySolver {
   // is called during local optimization to generate a non-minimal sample from
   // the inliers of the best model found so far. The input contains a list of
   // indices of the data points that should be used to generate the non-minimal
-  // sample. It is assumes that the non-minimal solver provides at most one 
+  // sample. It is assumes that the non-minimal solver provides at most one
   // model, which is returned in model. The function returns 1 if a model could
   // be estimated and 0 otherwise.
   // This function has to be implemented, but could simply always return 0.
@@ -140,7 +81,7 @@ class MySolver {
   int NonMinimalSolver(const std::vector<int>& sample,
                        Model* model) const;
 
-  // Evaluates a given model on the i-th data point and returns the squared 
+  // Evaluates a given model on the i-th data point and returns the squared
   // error of that correspondence wrt. the model.
   double EvaluateModelOnPoint(const Model& model, int i) const;
 
@@ -183,12 +124,12 @@ void solver_probabilities(std::vector<double>* solver_probabilites) const;
 
 // A call to one of the minimal solvers implemented inside the solver. The
 // input are multiple sets of indices, each between 0 and
-// num_data[solver_idx] - 1 that form the random minimal sample drawn by 
+// num_data[solver_idx] - 1 that form the random minimal sample drawn by
 // HybridRANSAC. In addition, the index solver_idx of the minimal solver
 // selected by HybridRANSAC is provided as input. The overall size of the
-// sample is guaranteed to be sample_sizes[solver_idx]. The function is 
+// sample is guaranteed to be sample_sizes[solver_idx]. The function is
 // responsible for running the solver_idx-th minimal solver on these
-// selected data points. The estimated models are returned in models and 
+// selected data points. The estimated models are returned in models and
 // the function returns the estimated number of models.
 int MinimalSolver(const std::vector<std::vector<int>>& sample,
                   const int solver_idx, ModelVector* models) const;
@@ -254,7 +195,7 @@ year = {2018}
 and the paper by Lebeda et al.
 
 ## Contributing
-Contributions to RansacLib, e.g., bug reports, improvements, or bug fixes, are very welcome. Please use Github's issues and pull request functionality to contribute. 
+Contributions to RansacLib, e.g., bug reports, improvements, or bug fixes, are very welcome. Please use Github's issues and pull request functionality to contribute.
 
 When contributing, please adhere to [Google's C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
 
