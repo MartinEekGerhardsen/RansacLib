@@ -44,9 +44,9 @@
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 
-#include <ransac_lib/ransac.h>
+#include <ransac_lib/ransac.hpp>
 
-#include "calibrated_absolute_pose_estimator.h"
+#include "calibrated_absolute_pose_estimator.hpp"
 
 template <typename T> double ComputeMedian(std::vector<T> *data) {
   T mean = static_cast<T>(0.0);

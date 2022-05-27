@@ -17,6 +17,19 @@ cd build/
 cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/your/installation/path
 cmake --build . --config Release --target -- -j $(nproc)
 ```
+
+Then include it in your project like:
+
+```
+project("proj-example")
+
+find_package(RansacLib CONFIG REQUIRED)
+
+add_executable(ransac-example src/main.cpp)
+target_link_libraries(ransac-example RansacLib::RansacLib)
+
+```
+
 We currently provide three examples:
 * `line_estimation` shows how to implement a solver for 2D line fitting and integrate it into RansacLib.
 * `hybrid_line_estimation` shows how to implement a hybrid solver for 2D line fitting and integrate it into HybridRANSAC.

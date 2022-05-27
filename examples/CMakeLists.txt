@@ -13,31 +13,35 @@ if(PoseLib AND Ceres)
 
   add_executable(
     camera_pose_estimation
-    camera_pose_estimation.cc calibrated_absolute_pose_estimator.cc
-    calibrated_absolute_pose_estimator.h)
+    camera_pose_estimation.cpp calibrated_absolute_pose_estimator.cpp
+    calibrated_absolute_pose_estimator.hpp)
   target_link_libraries(camera_pose_estimation ${POSELIB_LIBRARIES}
                         ${CERES_LIBRARIES} RansacLib)
 
   add_executable(
-    localization localization.cc calibrated_absolute_pose_estimator.cc
-                 calibrated_absolute_pose_estimator.h)
+    localization localization.cpp calibrated_absolute_pose_estimator.cpp
+                 calibrated_absolute_pose_estimator.hpp)
   target_link_libraries(localization ${POSELIB_LIBRARIES} ${CERES_LIBRARIES}
                         RansacLib)
 
   add_executable(
     localization_with_gt
-    localization_with_gt.cc calibrated_absolute_pose_estimator.cc
-    calibrated_absolute_pose_estimator.h)
+    localization_with_gt.cpp calibrated_absolute_pose_estimator.cpp
+    calibrated_absolute_pose_estimator.hpp)
   target_link_libraries(localization_with_gt ${POSELIB_LIBRARIES}
                         ${CERES_LIBRARIES} RansacLib)
 
 endif()
 
-add_executable(line_estimation line_estimation.cc line_estimator.cc
-                               line_estimator.h)
+add_executable(line_estimation line_estimation.cpp line_estimator.cpp
+                               line_estimator.hpp)
 target_link_libraries(line_estimation RansacLib)
 
 add_executable(
-  hybrid_line_estimation hybrid_line_estimation.cc hybrid_line_estimator.cc
-                         hybrid_line_estimator.h)
+  hybrid_line_estimation hybrid_line_estimation.cpp hybrid_line_estimator.cpp
+                         hybrid_line_estimator.hpp)
 target_link_libraries(hybrid_line_estimation RansacLib)
+
+add_executable(plane_estimation plane_estimation.cpp plane_estimator.cpp
+                                plane_estimator.hpp)
+target_link_libraries(plane_estimation RansacLib)

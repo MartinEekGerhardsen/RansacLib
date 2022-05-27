@@ -28,8 +28,7 @@
 //
 // author: Torsten Sattler, torsten.sattler.de@googlemail.com
 
-#ifndef RANSACLIB_RANSACLIB_UTILS_H_
-#define RANSACLIB_RANSACLIB_UTILS_H_
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -179,5 +178,3 @@ inline uint32_t NumRequiredIterations(const std::vector<double> inlier_ratios,
 
 } // namespace utils
 } // namespace ransac_lib
-
-#endif // RANSACLIB_RANSACLIB_UTILS_H_

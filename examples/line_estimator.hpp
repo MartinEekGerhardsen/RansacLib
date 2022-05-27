@@ -28,8 +28,7 @@
 //
 // author: Torsten Sattler, torsten.sattler.de@googlemail.com
 
-#ifndef RANSACLIB_EXAMPLE_LINE_ESTIMATOR_H_
-#define RANSACLIB_EXAMPLE_LINE_ESTIMATOR_H_
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -79,5 +78,3 @@ protected:
 };
 
 } // namespace ransac_lib
-
-#endif // RANSACLIB_EXAMPLE_LINE_ESTIMATOR_H_

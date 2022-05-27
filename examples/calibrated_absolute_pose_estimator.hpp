@@ -69,7 +69,7 @@ typedef std::vector<Vector3d, Eigen::aligned_allocator<Vector3d>> ViewingRays;
 // local camera coordinate system and c is the position of the camera in the
 // world coordinate system.
 class CalibratedAbsolutePoseEstimator {
- public:
+public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // The input to the constructor are the camera focal lengths f_x, f_y, a set
@@ -81,9 +81,9 @@ class CalibratedAbsolutePoseEstimator {
   // the P3P solver.
   CalibratedAbsolutePoseEstimator(const double f_x, const double f_y,
                                   const double squared_inlier_threshold,
-                                  const Points2D& points2D,
-                                  const ViewingRays& rays,
-                                  const Points3D& points3D);
+                                  const Points2D &points2D,
+                                  const ViewingRays &rays,
+                                  const Points3D &points3D);
 
   inline int min_sample_size() const { return 4; }
 
@@ -91,22 +91,22 @@ class CalibratedAbsolutePoseEstimator {
 
   inline int num_data() const { return num_data_; }
 
-  int MinimalSolver(const std::vector<int>& sample, CameraPoses* poses) const;
+  int MinimalSolver(const std::vector<int> &sample, CameraPoses *poses) const;
 
   // Returns 0 if no model could be estimated and 1 otherwise.
   // Implemented by non-linear optimization via Ceres.
-  int NonMinimalSolver(const std::vector<int>& sample, CameraPose* pose) const;
+  int NonMinimalSolver(const std::vector<int> &sample, CameraPose *pose) const;
 
   // Evaluates the pose on the i-th data point.
-  double EvaluateModelOnPoint(const CameraPose& pose, int i) const;
+  double EvaluateModelOnPoint(const CameraPose &pose, int i) const;
 
   // Linear least squares solver. Calls NonMinimalSolver.
-  void LeastSquares(const std::vector<int>& sample, CameraPose* pose) const;
+  void LeastSquares(const std::vector<int> &sample, CameraPose *pose) const;
 
   static void PixelsToViewingRays(const double focal_x, const double focal_y,
-                                  const Points2D& points2D, ViewingRays* rays);
+                                  const Points2D &points2D, ViewingRays *rays);
 
- protected:
+protected:
   // Focal lengths in x- and y-directions.
   double focal_x_;
   double focal_y_;
@@ -120,8 +120,8 @@ class CalibratedAbsolutePoseEstimator {
   int num_data_;
 };
 
-}  // namespace calibrated_absolute_pose
+} // namespace calibrated_absolute_pose
 
-}  // namespace ransac_lib
+} // namespace ransac_lib
 
-#endif  // RANSACLIB_EXAMPLE_CALIBRATED_ABSOLUTE_POSE_ESTIMATOR_H_
+#endif // RANSACLIB_EXAMPLE_CALIBRATED_ABSOLUTE_POSE_ESTIMATOR_H_

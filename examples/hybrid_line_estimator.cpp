@@ -41,7 +41,7 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
 
-#include "hybrid_line_estimator.h"
+#include "hybrid_line_estimator.hpp"
 
 namespace ransac_lib {
 

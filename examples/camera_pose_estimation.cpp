@@ -42,9 +42,9 @@
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 
-#include <ransac_lib/ransac.h>
+#include <ransac_lib/ransac.hpp>
 
-#include "calibrated_absolute_pose_estimator.h"
+#include "calibrated_absolute_pose_estimator.hpp"
 
 namespace ransac_lib {
 namespace calibrated_absolute_pose {

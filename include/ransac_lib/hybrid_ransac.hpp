@@ -38,8 +38,8 @@
 #include <random>
 #include <vector>
 
-#include <ransac_lib/hybrid_sampling.h>
-#include <ransac_lib/utils.h>
+#include <ransac_lib/hybrid_sampling.hpp>
+#include <ransac_lib/utils.hpp>
 
 namespace ransac_lib {
 

@@ -34,7 +34,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <random>
@@ -45,9 +44,9 @@
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 
-#include <ransac_lib/ransac.h>
+#include <ransac_lib/ransac.hpp>
 
-#include "calibrated_absolute_pose_estimator.h"
+#include "calibrated_absolute_pose_estimator.hpp"
 
 struct QueryData {
   std::string name;
@@ -90,22 +89,6 @@ bool LoadListAndFocals(const std::string &filename,
     } else if (camera_type.compare("PINHOLE") == 0) {
       q.radial.clear();
       s_stream >> q.focal_x >> q.focal_y >> q.c_x >> q.c_y;
-      q.focal_y = q.focal_x;
-    } else if (camera_type.compare("OPENCV") == 0) {
-      // The OPENCV camera model used in Colmap (see
-      // https://github.com/colmap/colmap/blob/master/src/base/camera_models.h
-      // for details).
-      q.radial.resize(4);
-      s_stream >> q.focal_x >> q.focal_y >> q.c_x >> q.c_y >> q.radial[0] >>
-          q.radial[1] >> q.radial[2] >> q.radial[3];
-    } else if (camera_type.compare("VSFM") == 0) {
-      q.radial.resize(1);
-      s_stream >> q.focal_x >> q.c_x >> q.c_y >> q.radial[0];
-      q.focal_y = q.focal_x;
-    } else if (camera_type.compare("BROWN_3_PARAMS") == 0) {
-      q.radial.resize(3);
-      s_stream >> q.focal_x >> q.focal_y >> q.c_x >> q.c_y >> q.radial[0] >>
-          q.radial[1] >> q.radial[2];
     }
     query_images->push_back(q);
   }
@@ -116,7 +99,7 @@ bool LoadListAndFocals(const std::string &filename,
 }
 
 // Loads the 2D-3D matches found for that image from a text file.
-bool LoadMatches(const std::string &filename, bool invert_Y_Z,
+bool LoadMatches(const std::string &filename,
                  ransac_lib::calibrated_absolute_pose::Points2D *points2D,
                  ransac_lib::calibrated_absolute_pose::Points3D *points3D) {
   points2D->clear();
@@ -137,11 +120,8 @@ bool LoadMatches(const std::string &filename, bool invert_Y_Z,
     Eigen::Vector3d p3D;
     s_stream >> p2D[0] >> p2D[1] >> p3D[0] >> p3D[1] >> p3D[2];
 
-    if (invert_Y_Z) {
-      // Inverting the y- and z-coordinate due to a choice of coordinate system.
-      p3D[1] *= -1.0;
-      p3D[2] *= -1.0;
-    }
+    p3D[1] *= -1.0;
+    p3D[2] *= -1.0;
 
     points2D->push_back(p2D);
     points3D->push_back(p3D);
@@ -160,13 +140,9 @@ int main(int argc, char **argv) {
   using ransac_lib::calibrated_absolute_pose::ViewingRays;
 
   std::cout << " usage: " << argv[0] << " images_with_intrinsics outfile "
-            << "inlier_threshold num_lo_steps invert_Y_Z points_centered "
             << "[match-file postfix]" << std::endl;
-  if (argc < 7)
+  if (argc < 3)
     return -1;
-
-  bool invert_Y_Z = static_cast<bool>(atoi(argv[5]));
-  bool points_centered = static_cast<bool>(atoi(argv[6]));
 
   std::vector<QueryData> query_data;
   std::string list(argv[1]);
@@ -185,8 +161,8 @@ int main(int argc, char **argv) {
   }
 
   std::string matchfile_postfix = ".individual_datasets.matches.txt";
-  if (argc >= 8) {
-    matchfile_postfix = std::string(argv[7]);
+  if (argc >= 4) {
+    matchfile_postfix = std::string(argv[3]);
   }
   for (int i = 0; i < kNumQuery; ++i) {
     std::cout << std::endl << std::endl;
@@ -195,37 +171,13 @@ int main(int argc, char **argv) {
     Points3D points3D;
     std::string matchfile(query_data[i].name);
     matchfile.append(matchfile_postfix);
-    if (!LoadMatches(matchfile, invert_Y_Z, &points2D, &points3D)) {
+    if (!LoadMatches(matchfile, &points2D, &points3D)) {
       std::cerr << "  ERROR: Could not load matches from " << matchfile
                 << std::endl;
       continue;
     }
-
     const int kNumMatches = static_cast<int>(points2D.size());
-    //    // Writes out the matches after subtracting the principal point.
-    //    {
-    //      for (int j = 0; j < kNumMatches; ++j) {
-    //        points2D[j][0] -= query_data[i].c_x;
-    //        points2D[j][1] -= query_data[i].c_y;
-    //      }
-    //
-    //      std::ofstream ofs(matchfile.c_str(), std::ios::out);
-    //      if (ofs.is_open()) {
-    //        std::cout << " Updating match file" << std::endl;
-    //
-    //        for (int j = 0; j < kNumMatches; ++j) {
-    //          ofs << std::setprecision(12) << points2D[j][0] << " "
-    //              << points2D[j][1] << " " << points3D[j][0] << " "
-    //              << points3D[j][1] << " " << points3D[j][2] << std::endl;
-    //        }
-    //
-    //        ofs.close();
-    //      }
-    //    }
-
-    std::cout << " image " << query_data[i].name << " has # " << kNumMatches
-              << " matches as input to RANSAC" << std::endl;
-    if (kNumMatches <= 3) {
+    if (kNumMatches <= 11) {
       std::cout << " Found only " << kNumMatches << " matches for query image "
                 << query_data[i].name << " -> skipping image" << std::endl;
       continue;
@@ -234,28 +186,22 @@ int main(int argc, char **argv) {
               << query_data[i].focal_x << " " << query_data[i].focal_y
               << std::endl;
     ViewingRays rays;
-    if (!points_centered) {
-      for (int j = 0; j < kNumMatches; ++j) {
-        points2D[j][0] -= query_data[i].c_x;
-        points2D[j][1] -= query_data[i].c_y;
-      }
-    }
     CalibratedAbsolutePoseEstimator::PixelsToViewingRays(
         query_data[i].focal_x, query_data[i].focal_y, points2D, &rays);
 
     ransac_lib::LORansacOptions options;
-    options.min_num_iterations_ = 200u;
-    options.max_num_iterations_ = 100000u;
+    options.min_num_iterations_ = 20u;
+    options.max_num_iterations_ = 10000u;
     options.min_sample_multiplicator_ = 7;
     options.num_lsq_iterations_ = 4;
-    options.num_lo_steps_ = atoi(argv[4]);
-    options.lo_starting_iterations_ = 60;
-    options.final_least_squares_ = true;
+    options.num_lo_steps_ = 10;
+    options.lo_starting_iterations_ = 20;
+    options.final_least_squares_ = false;
 
     std::random_device rand_dev;
     options.random_seed_ = rand_dev();
 
-    const double kInThreshPX = static_cast<double>(atof(argv[3]));
+    const double kInThreshPX = 5.0;
     options.squared_inlier_threshold_ = kInThreshPX * kInThreshPX;
 
     CalibratedAbsolutePoseEstimator solver(
@@ -285,10 +231,8 @@ int main(int argc, char **argv) {
     std::cout << "   ... LOMSAC executed " << ransac_stats.number_lo_iterations
               << " local optimization stages" << std::endl;
 
-    std::cout << "  Image " << query_data[i].name << " : we found # "
-              << num_ransac_inliers << " inliers" << std::endl;
-
-    //    if (num_ransac_inliers < 12) continue;
+    if (num_ransac_inliers < 12)
+      continue;
 
     Eigen::Matrix3d R = best_model.topLeftCorner<3, 3>();
     Eigen::Vector3d t = -R * best_model.col(3);

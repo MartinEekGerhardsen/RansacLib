@@ -30,29 +30,24 @@
 
 #include <iostream>
 
+#include <Eigen/StdVector>
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
-#include <Eigen/StdVector>
 
-#include "calibrated_absolute_pose_estimator.h"
+#include "calibrated_absolute_pose_estimator.hpp"
 
 namespace ransac_lib {
 
 namespace calibrated_absolute_pose {
 
 struct ReprojectionError {
-  ReprojectionError(double x, double y, double X, double Y, double Z,
-                    double fx, double fy)
-      : point2D_x(x),
-        point2D_y(y),
-        point3D_X(X),
-        point3D_Y(Y),
-        point3D_Z(Z),
-        f_x(fx),
-        f_y(fy) {}
+  ReprojectionError(double x, double y, double X, double Y, double Z, double fx,
+                    double fy)
+      : point2D_x(x), point2D_y(y), point3D_X(X), point3D_Y(Y), point3D_Z(Z),
+        f_x(fx), f_y(fy) {}
 
   template <typename T>
-  bool operator()(const T* const camera, T* residuals) const {
+  bool operator()(const T *const camera, T *residuals) const {
     // The last three entries are the camera position.
     T p[3];
     p[0] = point3D_X - camera[3];
@@ -74,7 +69,7 @@ struct ReprojectionError {
   }
 
   // Factory function
-  static ceres::CostFunction* CreateCost(const double x, const double y,
+  static ceres::CostFunction *CreateCost(const double x, const double y,
                                          const double X, const double Y,
                                          const double Z, const double fx,
                                          const double fy) {
@@ -98,18 +93,15 @@ struct ReprojectionError {
 
 CalibratedAbsolutePoseEstimator::CalibratedAbsolutePoseEstimator(
     const double f_x, const double f_y, const double squared_inlier_threshold,
-    const Points2D& points2D, const ViewingRays& rays, const Points3D& points3D)
-    : focal_x_(f_x),
-      focal_y_(f_y),
-      squared_inlier_threshold_(squared_inlier_threshold),
-      points2D_(points2D),
-      points3D_(points3D),
-      rays_(rays) {
+    const Points2D &points2D, const ViewingRays &rays, const Points3D &points3D)
+    : focal_x_(f_x), focal_y_(f_y),
+      squared_inlier_threshold_(squared_inlier_threshold), points2D_(points2D),
+      points3D_(points3D), rays_(rays) {
   num_data_ = static_cast<int>(points2D_.size());
 }
 
 int CalibratedAbsolutePoseEstimator::MinimalSolver(
-    const std::vector<int>& sample, CameraPoses* poses) const {
+    const std::vector<int> &sample, CameraPoses *poses) const {
   poses->clear();
   std::vector<Eigen::Vector3d> x(3), X(3);
   for (int i = 0; i < 3; ++i) {
@@ -119,9 +111,10 @@ int CalibratedAbsolutePoseEstimator::MinimalSolver(
 
   std::vector<pose_lib::CameraPose> poselib_poses;
   int num_sols = pose_lib::p3p(x, X, &poselib_poses);
-  if (num_sols == 0) return 0;
+  if (num_sols == 0)
+    return 0;
 
-  for (const pose_lib::CameraPose& pose : poselib_poses) {
+  for (const pose_lib::CameraPose &pose : poselib_poses) {
     CameraPose P;
     P.topLeftCorner<3, 3>() = pose.R;
     P.col(3) = -pose.R.transpose() * pose.t;
@@ -139,7 +132,7 @@ int CalibratedAbsolutePoseEstimator::MinimalSolver(
 // Returns 0 if no model could be estimated and 1 otherwise.
 // Implemented via non-linear optimization in Ceres.
 int CalibratedAbsolutePoseEstimator::NonMinimalSolver(
-    const std::vector<int>& sample, CameraPose* pose) const {
+    const std::vector<int> &sample, CameraPose *pose) const {
   CameraPoses poses;
   if (MinimalSolver(sample, &poses) == 1) {
     *pose = poses[0];
@@ -151,13 +144,15 @@ int CalibratedAbsolutePoseEstimator::NonMinimalSolver(
 }
 
 // Evaluates the pose on the i-th data point.
-double CalibratedAbsolutePoseEstimator::EvaluateModelOnPoint(
-    const CameraPose& pose, int i) const {
+double
+CalibratedAbsolutePoseEstimator::EvaluateModelOnPoint(const CameraPose &pose,
+                                                      int i) const {
   Eigen::Vector3d p_c =
       pose.topLeftCorner<3, 3>() * (points3D_[i] - pose.col(3));
 
   // Check whether point projects behind the camera.
-  if (p_c[2] < 0.0) return std::numeric_limits<double>::max();
+  if (p_c[2] < 0.0)
+    return std::numeric_limits<double>::max();
 
   Eigen::Vector2d p_2d = p_c.head<2>() / p_c[2];
   p_2d[0] *= focal_x_;
@@ -168,7 +163,7 @@ double CalibratedAbsolutePoseEstimator::EvaluateModelOnPoint(
 
 // Reference implementation using Ceres for refinement.
 void CalibratedAbsolutePoseEstimator::LeastSquares(
-    const std::vector<int>& sample, CameraPose* pose) const {
+    const std::vector<int> &sample, CameraPose *pose) const {
   Eigen::AngleAxisd aax(pose->topLeftCorner<3, 3>());
   Eigen::Vector3d aax_vec = aax.axis() * aax.angle();
   double camera[6];
@@ -184,11 +179,10 @@ void CalibratedAbsolutePoseEstimator::LeastSquares(
   const int kSampleSize = static_cast<int>(sample.size());
   for (int i = 0; i < kSampleSize; ++i) {
     const int kIdx = sample[i];
-    const Eigen::Vector2d& p_img = points2D_[kIdx];
-    const Eigen::Vector3d& p_3D = points3D_[kIdx];
-    ceres::CostFunction* cost_function =
-        ReprojectionError::CreateCost(p_img[0], p_img[1], p_3D[0], p_3D[1],
-                                      p_3D[2], focal_x_, focal_y_);
+    const Eigen::Vector2d &p_img = points2D_[kIdx];
+    const Eigen::Vector3d &p_3D = points3D_[kIdx];
+    ceres::CostFunction *cost_function = ReprojectionError::CreateCost(
+        p_img[0], p_img[1], p_3D[0], p_3D[1], p_3D[2], focal_x_, focal_y_);
 
     refinement_problem.AddResidualBlock(cost_function, nullptr, camera);
   }
@@ -212,8 +206,8 @@ void CalibratedAbsolutePoseEstimator::LeastSquares(
 }
 
 void CalibratedAbsolutePoseEstimator::PixelsToViewingRays(
-    const double focal_x, const double focal_y, const Points2D& points2D,
-    ViewingRays* rays) {
+    const double focal_x, const double focal_y, const Points2D &points2D,
+    ViewingRays *rays) {
   const int kNumData = static_cast<int>(points2D.size());
 
   // Creates the bearing vectors and points for the OpenGV adapter.
@@ -225,6 +219,6 @@ void CalibratedAbsolutePoseEstimator::PixelsToViewingRays(
     (*rays)[i].normalize();
   }
 }
-}  // namespace calibrated_absolute_pose
+} // namespace calibrated_absolute_pose
 
-}  // namespace ransac_lib
+} // namespace ransac_lib
