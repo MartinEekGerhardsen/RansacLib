@@ -5,6 +5,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <Eigen/StdVector>
 
 #include <ransac_lib/ransac.hpp>
 
@@ -14,8 +15,9 @@ void GenerateRandomInstance(const int num_inliers, const int num_outliers,
                             double inlier_threshold, double plane_radius,
                             const Eigen::Hyperplane<double, 3> &plane,
                             Eigen::Matrix3Xd &points) {
+
   const int kNumPoints = num_inliers + num_outliers;
-  points.resize(2, kNumPoints);
+  points.resize(3, kNumPoints);
 
   std::vector<int> indices(kNumPoints);
   std::iota(indices.begin(), indices.end(), 0);

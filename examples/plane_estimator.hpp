@@ -4,6 +4,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <Eigen/StdVector>
 
 namespace ransac_lib {
 
@@ -13,8 +14,7 @@ private:
   using Vector = Eigen::Vector3d;
 
 public:
-  PlaneEstimator(const Eigen::Matrix3d &data)
-      : data_{data}, num_data_{static_cast<int>(data.cols())} {}
+  PlaneEstimator(const Eigen::Matrix3Xd &data);
   ~PlaneEstimator() = default;
 
   inline int min_sample_size() const { return 3; }

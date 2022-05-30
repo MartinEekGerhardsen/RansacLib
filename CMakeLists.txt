@@ -23,11 +23,7 @@ else()
   target_include_directories(RansacLib SYSTEM INTERFACE ${EIGEN3_INCLUDE_DIR})
 endif()
 
-set_target_properties(
-  RansacLib
-  PROPERTIES CXX_STANDARD 11
-             CXX_STANDARD_REQUIRED YES
-             CXX_EXTENSIONS NO)
+target_compile_features(RansacLib INTERFACE cxx_std_17)
 
 option(RANSACLIB_INSTALL "Install RansacLib. " OFF)
 if(RANSACLIB_INSTALL)

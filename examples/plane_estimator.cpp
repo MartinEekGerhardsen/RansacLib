@@ -5,6 +5,11 @@
 
 namespace ransac_lib {
 
+PlaneEstimator::PlaneEstimator(const Eigen::Matrix3Xd &data) {
+  data_ = data;
+  num_data_ = static_cast<int>(data.cols());
+}
+
 int PlaneEstimator::MinimalSolver(const std::vector<int> &sample,
                                   std::vector<Plane> *planes) const {
   planes->clear();
