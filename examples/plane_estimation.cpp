@@ -2,6 +2,8 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include <memory> 
+#include <fstream>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -14,7 +16,11 @@
 void GenerateRandomInstance(const int num_inliers, const int num_outliers,
                             double inlier_threshold, double plane_radius,
                             const Eigen::Hyperplane<double, 3> &plane,
-                            Eigen::Matrix3Xd &points) {
+                            Eigen::Matrix3Xd &points, 
+                            Eigen::ArrayXi& inliers, 
+                            Eigen::ArrayXi& outliers) {
+  inliers.resize(num_inliers); 
+  outliers.resize(num_outliers); 
 
   const int kNumPoints = num_inliers + num_outliers;
   points.resize(3, kNumPoints);
@@ -31,34 +37,53 @@ void GenerateRandomInstance(const int num_inliers, const int num_outliers,
 
   urd inlier_dist(-inlier_threshold, inlier_threshold);
   urd radius_dist(inlier_threshold, plane_radius + inlier_threshold);
+  urd outlier_radius_dist(-plane_radius - inlier_threshold, plane_radius + inlier_threshold); 
   urd angle_dist(-3.14159265358979323846, 3.14159265358979323846);
+ 
+  // Planar point closest to origin
+  Eigen::Vector3d centre = plane.normal() * plane.offset() / plane.normal().squaredNorm(); 
 
-  // Generate random inlier
-  Eigen::Vector3d w =
-      (plane.normal().x() == 0)
-          ? plane.normal().matrix().cross(Eigen::Vector3d::UnitX())
-          : plane.normal().matrix().cross(Eigen::Vector3d::UnitZ());
+  // Create spherical representation of normal 
+  double radius_orthogonal = plane.normal().norm(); 
+  double phi_orthogonal = std::atan2(plane.normal().y(), plane.normal().x()); 
+  double theta_orthogonal = std::fmod(
+    std::atan(
+      (plane.normal().template topRows<2>().norm())
+      / (plane.normal().z())
+    ) + (3.14159265358979323846 / 2), 
+    3.14159265358979323846
+  );
+
+  Eigen::Vector3d orthogonal; 
+  orthogonal 
+    <<  radius_orthogonal * std::cos(phi_orthogonal) * std::sin(theta_orthogonal), 
+        radius_orthogonal * std::sin(phi_orthogonal) * std::sin(theta_orthogonal), 
+        radius_orthogonal * std::cos(theta_orthogonal); 
 
   for (int i{0}; i < num_inliers; ++i) {
     const int index = indices[i];
-    Eigen::AngleAxisd angle(angle_dist(rng), w);
+    inliers(i) = index; 
 
-    points.col(index) = angle.axis() * radius_dist(rng);
+    double radius = radius_dist(rng); 
+    double angle = angle_dist(rng); 
 
-    if (plane.offset() != 0) {
-      points.col(index) += plane.normal() * (plane.offset() + inlier_dist(rng));
-    }
+    points.col(index) = centre + radius * (
+      Eigen::AngleAxisd(angle, plane.normal()) * orthogonal
+    ); 
   }
 
   for (int i{num_inliers}; i < kNumPoints; ++i) {
     const int index = indices[i];
+    outliers(i - num_inliers) = index; 
 
-    points.col(index) =
-        Eigen::Vector3d(radius_dist(rng), radius_dist(rng), radius_dist(rng));
+    points.col(index) = centre + Eigen::Vector3d::NullaryExpr(
+      [&]() {return outlier_radius_dist(rng); }
+    );
 
     while (plane.absDistance(points.col(index)) < inlier_threshold) {
-      points.col(index) =
-          Eigen::Vector3d(radius_dist(rng), radius_dist(rng), radius_dist(rng));
+      points.col(index) = centre + Eigen::Vector3d::NullaryExpr(
+        [&]() {return outlier_radius_dist(rng); }
+      );
     }
   }
 }
@@ -74,6 +99,7 @@ int main(int argc, char **argv) {
 
   Eigen::Hyperplane<double, 3> plane(Eigen::Vector3d(0.5, 0, 0.5),
                                      Eigen::Vector3d(10, 12, -1));
+  plane.normalize(); 
 
   const int kNumDataPoints = 1000;
   std::vector<double> outlier_ratios = {0.1, 0.2, 0.3, 0.4,  0.5,  0.6,
@@ -85,8 +111,31 @@ int main(int argc, char **argv) {
     int num_inliers = kNumDataPoints - num_outliers;
 
     Eigen::Matrix3Xd data;
+    Eigen::ArrayXi inliers, outliers; 
     GenerateRandomInstance(num_inliers, num_outliers, 0.1 * 0.5, 10, plane,
-                           data);
+                           data, inliers, outliers);
+
+    // {
+    //   Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", "\n"); 
+      
+    //   std::stringstream ss_data, ss_inliers, ss_outliers; 
+      
+    //   std::string path = "/home/martin/dev/RansacLib/examples/data/"; 
+    //   ss_data << path << "data_" << outlier_ratio << ".csv"; 
+    //   ss_inliers << path << "inliers_" << outlier_ratio << ".csv"; 
+    //   ss_outliers << path << "outliers_" << outlier_ratio << ".csv"; 
+      
+    //   std::ofstream data_file; 
+    //   data_file.open(ss_data.str().c_str()); 
+    //   std::ofstream inliers_file; 
+    //   inliers_file.open(ss_inliers.str().c_str()); 
+    //   std::ofstream outliers_file; 
+    //   outliers_file.open(ss_outliers.str().c_str()); 
+
+    //   data_file << data.format(CSVFormat); 
+    //   inliers_file << inliers.format(CSVFormat); 
+    //   outliers_file << outliers.format(CSVFormat); 
+    // }
 
     ransac_lib::PlaneEstimator solver(data);
     ransac_lib::LocallyOptimizedMSAC<Eigen::Hyperplane<double, 3>,
