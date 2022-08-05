@@ -44,4 +44,7 @@ target_link_libraries(hybrid_line_estimation RansacLib)
 
 add_executable(plane_estimation plane_estimation.cpp plane_estimator.cpp
                                 plane_estimator.hpp)
-target_link_libraries(plane_estimation RansacLib)
+
+find_package(Matplot++ REQUIRED)
+
+target_link_libraries(plane_estimation RansacLib Matplot++::matplot)

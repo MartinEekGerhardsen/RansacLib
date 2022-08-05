@@ -2,5 +2,6 @@
     "cmake.configureArgs": [
         "-DRANSACLIB_BUILD_EXAMPLES=ON",
         "-DRANSACLIB_INSTALL=ON"
-    ]
+    ],
+    "ros.distro": "melodic"
 }
